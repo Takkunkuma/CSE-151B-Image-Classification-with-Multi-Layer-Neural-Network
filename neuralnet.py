@@ -61,44 +61,46 @@ class Activation():
             return self.grad_output(z)
 
 
-    def sigmoid(self, x):
+    def sigmoid(self, a):
         """
         TODO: Implement the sigmoid activation here.
         """
-        raise NotImplementedError("Sigmoid not implemented")
 
-    def tanh(self, x):
+        return 1 / (1 + np.exp(a))
+
+    def tanh(self, a):
         """
         TODO: Implement tanh here.
         """
-        raise NotImplementedError("Tanh not implemented")
 
-    def ReLU(self, x):
+        return np.tanh(x)
+
+    def ReLU(self, a):
         """
         TODO: Implement ReLU here.
         """
-        raise NotImplementedError("ReLU not implemented")
+        return np.max(0, a)
 
-    def output(self, x):
+    def output(self, a):
         """
         TODO: Implement softmax function here.
         Remember to take care of the overflow condition.
         """
         raise NotImplementedError("output activation not implemented")
 
-    def grad_sigmoid(self,x):
+    def grad_sigmoid(self, x):
         """
         TODO: Compute the gradient for sigmoid here.
         """
         raise NotImplementedError("Sigmoid gradient not implemented")
 
-    def grad_tanh(self,x):
+    def grad_tanh(self, x):
         """
         TODO: Compute the gradient for tanh here.
         """
         raise NotImplementedError("Tanh gradient not implemented")
 
-    def grad_ReLU(self,x):
+    def grad_ReLU(self, x):
         """
         TODO: Compute the gradient for ReLU here.
         """
@@ -123,7 +125,7 @@ class Layer():
         """
         np.random.seed(42)
 
-        self.w = None
+        self.w = Noneme
         if (weightType == 'random'):
             self.w = 0.01 * np.random.random((in_units + 1, out_units))
 
@@ -146,7 +148,11 @@ class Layer():
         """
         TODO: Compute the forward pass (activation of the weighted input) through the layer here and return it.
         """
-        raise NotImplementedError("Forward propagation not implemented for Layer")
+
+        self.a = self.x @ self.w
+        self.z = self.activation(self.a)
+
+        return self.z
 
     def backward(self, deltaCur, learning_rate, momentum_gamma, regularization, gradReqd=True):
         """
