@@ -143,7 +143,7 @@ def append_bias(X):
     
     N = X.shape[0]
     bias = np.ones((N, 1))
-    return np.column_stack((bias, N))
+    return np.column_stack((bias, X))
 
 
 
@@ -204,7 +204,7 @@ def createTrainValSplit(x_train, y_train):
     
     # combine then shuffle
     combined = np.column_stack((x_train, y_train))
-    np.shuffle(combined) # shuffles in place
+    np.random.shuffle(combined) # shuffles in place
 
     
     train_prop = np.floor(N*0.8).astype(int)
@@ -253,7 +253,6 @@ def load_data(path):
     train_labels = np.array(train_labels).reshape((len(train_labels),-1))
     train_images, train_labels, val_images, val_labels = createTrainValSplit(train_images,train_labels)
     
-    print('size of train', train_images.shape)
 
     train_normalized_images = normalize_data(train_images)
     train_one_hot_labels = one_hot_encoding(train_labels)

@@ -155,7 +155,7 @@ class Layer():
         """
 
         self.x = x
-        self.a = self.x @ self.w
+        self.a = util.append_bias(self.x @ self.w)
         self.z = self.activation(self.a)
 
         return self.z
@@ -172,7 +172,7 @@ class Layer():
         """
 
         # delta_j
-        delta_j = deltaCur @ self.activation.backward(self.a)
+        delta_j = deltaCur * self.activation.backward(self.a)
 
         # calculate delta_j & w_ij for all j
         to_return = delta_j @ self.w.T
@@ -228,13 +228,18 @@ class Neuralnetwork():
         TODO: Compute forward pass through all the layers in the network and return the loss.
         If targets are provided, return loss and accuracy/number of correct predictions as well.
         """
+        self.x = x
         output = x
         # Compute forward pass through all the layers
         for i in range(self.num_layers):
+            print('in layer ', i)
+            print(self.layers[i].w.shape)
             output = self.layers[i].forward(output)
-
+            
 
         # output is now N X 10
+        self.y = output
+        self.targets = targets
 
         
         
@@ -265,7 +270,7 @@ class Neuralnetwork():
 
         # backprop through all layers
         for i in range(self.num_layers - 1, -1, -1):
-            deltaPrev = self.layers[i].backward(deltaCur=deltaPrev, learning_rate=self.learningRate, gradReqd=gradReqd)
+            delta_prev = self.layers[i].backward(deltaCur=delta_prev, learning_rate=self.learning_rate, gradReqd=gradReqd)
             
 
 
