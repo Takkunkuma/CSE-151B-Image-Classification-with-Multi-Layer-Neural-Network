@@ -34,7 +34,17 @@ def normalize_data(inp):
         normalized inp: N X d 2D array
 
     """
-    raise NotImplementedError("normalize_data not implemented")
+
+
+    # N X (32 * 32 * 3) to N X 32 * 32 X 3
+    d = inp.shape[1] / 3 # only works for square images
+    N = inp.shape[0]
+    per_channel = inp.reshape((N, d, 3))
+
+
+    # normalize per channel per image
+    mu_per_channel_per_image = np.mean(per_channel, axis=2)
+
 
 
 
