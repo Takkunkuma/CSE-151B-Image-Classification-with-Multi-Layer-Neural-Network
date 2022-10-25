@@ -116,7 +116,7 @@ class Activation():
         Deliberately returning 1 for output layer case since we don't multiply by any activation for final layer's delta. Feel free to use/disregard it
         """
 
-        return np.ones(x.shape)
+        return 1
 
 
 class Layer():
@@ -154,6 +154,7 @@ class Layer():
         TODO: Compute the forward pass (activation of the weighted input) through the layer here and return it.
         """
 
+        self.x = x
         self.a = self.x @ self.w
         self.z = self.activation(self.a)
 
@@ -173,11 +174,11 @@ class Layer():
         # delta_j
         delta_j = deltaCur @ self.activation.backward(self.a)
 
-        self.dw = delta_j @ self.z
-
         # calculate delta_j & w_ij for all j
-        to_return = delta_j @ self.w
+        to_return = delta_j @ self.w.T
 
+        # grad w
+        self.dw = self.x.T @ delta_j 
 
         # update weights
         if gradReqd:
@@ -235,12 +236,13 @@ class Neuralnetwork():
 
         # output is now N X 10
 
-        # return the acc
-        if (targets is None):
-            return output
         
-        # if targets is given return 
-        return output, util.calculateCorrect(output, targets)
+        
+        # if targets is given return loss and accuracy
+        if targets is not None:
+            return self.loss(output, targets), util.calculateCorrect(output, targets)
+
+        return
 
 
 
@@ -249,43 +251,22 @@ class Neuralnetwork():
         TODO: compute the categorical cross-entropy loss and return it.
         '''
 
-
-
-
-
-
-        raise NotImplementedError("Loss not implemented for NeuralNetwork")
+        loss = - (targets * np.log(logits)).sum()
+        return loss
 
     def backward(self, gradReqd=True):
         '''
         TODO: Implement backpropagation here by calling backward method of Layers class.
         Call backward methods of individual layers.
         '''
-        # don't update weights, only calculate delta backwards
-        if (gradReqd == False):
+        
 
-            # backprop through all layers
-            for i in range(self.num_layers - 1, -1, -1):
-                # perfrom backprop and save delta for the previous layer
-                if i == self.num_layers - 1:
-                    # output layer: t-y
-                    deltaPrev = self.layers[i].backward(
-                        deltaCur=self.target - self.y, learning_rate=self.learningRate, gradReqd=False)
-                elif i > 0:
-                    # hidden layers
-                    deltaPrev = self.layers[i].backward(
-                        deltaCur=deltaPrev, learning_rate=self.learningRate, gradReqd=False)
-                elif i == 0:
-                    # not saving delta for input layer
-                    self.layers[i].backward(
-                        deltaCur=deltaPrev, learning_rate=self.learningRate, gradReqd=False)
-        else:
-            # update wieghts
-            for i in range(self.num_layers - 1, -1, -1):
-                self.layers[i].backward(
-                    learning_rate=self.learningRate, gradReqd=True)
-    
+        delta_prev = self.targets - self.y
 
+        # backprop through all layers
+        for i in range(self.num_layers - 1, -1, -1):
+            deltaPrev = self.layers[i].backward(deltaCur=deltaPrev, learning_rate=self.learningRate, gradReqd=gradReqd)
+            
 
 
 
