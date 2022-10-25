@@ -37,13 +37,25 @@ def normalize_data(inp):
 
 
     # N X (32 * 32 * 3) to N X 32 * 32 X 3
-    d = inp.shape[1] / 3 # only works for square images
+    d = int(inp.shape[1] / 3) # only works for square images
     N = inp.shape[0]
-    per_channel = inp.reshape((N, d, 3))
 
+    per_channel = inp.reshape((N, d, 3))
+    
 
     # normalize per channel per image
-    mu_per_channel_per_image = np.mean(per_channel, axis=2)
+    mu_per_channel_per_image = np.mean(per_channel, axis=1)
+    std_per_channel_per_image = np.std(per_channel, axis=1)
+    
+  
+    mu_2d = np.column_stack([np.tile(mu_per_channel_per_image[:, i].reshape((N, 1)), d) for i in range(3)])
+    std_2d = np.column_stack([np.tile(std_per_channel_per_image[:, i].reshape((N, 1)), d) for i in range(3)])
+
+
+    normalized = (inp - mu_2d) / std_2d
+    
+
+    return normalized
 
 
 
@@ -61,7 +73,17 @@ def one_hot_encoding(labels, num_classes=10):
         oneHot : N X num_classes 2D array
 
     """
-    raise NotImplementedError("one_hot_encoding not implemented")
+    
+    n = labels.size
+    k = num_classes
+
+    matrix = np.zeros((n, k))
+    
+    # for each row, change the value specified at index y to 1
+    matrix[np.arange(n), labels] = 1
+
+    return matrix
+
 
 
 
@@ -99,7 +121,12 @@ def calculateCorrect(y,t):  #Feel free to use this function to return accuracy i
     returns:
         the number of correct predictions
     """
-    raise NotImplementedError("calculateCorrect not implemented")
+
+
+    pred = np.argmax(y, axis=1)
+    target = np.argmax(t, axis=1)
+
+    return np.sum(pred == target)
 
 
 
@@ -112,7 +139,11 @@ def append_bias(X):
     returns:
         X_bias (N X (d+1)) 2D Array
     """
-    raise NotImplementedError("append_bias not implemented")
+    
+    
+    N = X.shape[0]
+    bias = np.ones((N, 1))
+    return np.column_stack((bias, N))
 
 
 
@@ -159,13 +190,35 @@ def plots(trainEpochLoss, trainEpochAccuracy, valEpochLoss, valEpochAccuracy, ea
 
 
 
-def createTrainValSplit(x_train,y_train):
+def createTrainValSplit(x_train, y_train):
 
     """
     TODO
     Creates the train-validation split (80-20 split for train-val). Please shuffle the data before creating the train-val split.
     """
-    raise NotImplementedError("createTrainValSplit not implemented")
+
+    # x_train is N X d
+    # y_train is N X 1
+
+    N = x_train.shape[0]
+    
+    # combine then shuffle
+    combined = np.column_stack((x_train, y_train))
+    np.shuffle(combined) # shuffles in place
+
+    
+    train_prop = np.floor(N*0.8).astype(int)
+
+    x_train_sh = combined[:train_prop, :-1]
+    y_train_sh = combined[:train_prop, -1]
+
+    x_valid_sh = combined[train_prop:, :-1]
+    y_valid_sh = combined[train_prop:, -1]
+
+    return x_train_sh, y_train_sh, x_valid_sh, y_valid_sh
+    
+
+
 
 
 
@@ -199,18 +252,21 @@ def load_data(path):
     train_images = np.array(train_images)
     train_labels = np.array(train_labels).reshape((len(train_labels),-1))
     train_images, train_labels, val_images, val_labels = createTrainValSplit(train_images,train_labels)
+    
+    print('size of train', train_images.shape)
 
-    train_normalized_images =  None #TODO
-    train_one_hot_labels = None #TODO
+    train_normalized_images = normalize_data(train_images)
+    train_one_hot_labels = one_hot_encoding(train_labels)
 
-    val_normalized_images = None #TODO
-    val_one_hot_labels = None #TODO
+    val_normalized_images = normalize_data(val_images)
+    val_one_hot_labels = one_hot_encoding(val_labels)
 
     test_images_dict = unpickle(os.path.join(cifar_path, f"test_batch"))
     test_data = test_images_dict[b'data']
     test_labels = test_images_dict[b'labels']
     test_images = np.array(test_data)
     test_labels = np.array(test_labels).reshape((len(test_labels),-1))
-    test_normalized_images= None #TODO
-    test_one_hot_labels = None #TODO
+    test_normalized_images = normalize_data(test_images)
+    test_one_hot_labels = one_hot_encoding(test_labels)
+    
     return train_normalized_images, train_one_hot_labels, val_normalized_images, val_one_hot_labels,  test_normalized_images, test_one_hot_labels

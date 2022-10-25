@@ -116,7 +116,7 @@ class Activation():
         Deliberately returning 1 for output layer case since we don't multiply by any activation for final layer's delta. Feel free to use/disregard it
         """
 
-        return 1
+        return np.ones(x.shape)
 
 
 class Layer():
@@ -130,7 +130,7 @@ class Layer():
         """
         np.random.seed(42)
 
-        self.w = Noneme
+        self.w = None
         if (weightType == 'random'):
             self.w = 0.01 * np.random.random((in_units + 1, out_units))
 
@@ -170,16 +170,20 @@ class Layer():
         Feel free to change the function signature if you think of an alternative way to implement the delta calculation or the backward pass
         """
 
-        # update weights
-        if (gradReqd):
-            self.w = self.w + learning_rate * self.dw
-            return
-        
-        # calculate del J / del a
-        self.dw = -deltaCur @ self.z
+        # delta_j
+        delta_j = deltaCur @ self.activation.backward(self.a)
 
-        # return delta to the previous layer
-        return deltaCur@self.activation.backward(self.z)
+        self.dw = delta_j @ self.z
+
+        # calculate delta_j & w_ij for all j
+        to_return = delta_j @ self.w
+
+
+        # update weights
+        if gradReqd:
+            self.w = self.w + learning_rate * self.dw
+
+        return to_return
         
 
 
@@ -228,15 +232,15 @@ class Neuralnetwork():
         for i in range(self.num_layers):
             output = self.layers[i].forward(output)
 
-        # one hot encode after the output layer
-        output = util.one_hot_encoding(output)
+
+        # output is now N X 10
 
         # return the acc
         if (targets is None):
             return output
         
-        # targets is given return output (OHE) and accuracy
-        return output, np.mean(np.argmax(output, axis=1) - np.argmax(targets, axis=1))
+        # if targets is given return 
+        return output, util.calculateCorrect(output, targets)
 
 
 
@@ -244,6 +248,9 @@ class Neuralnetwork():
         '''
         TODO: compute the categorical cross-entropy loss and return it.
         '''
+
+
+
 
 
 
