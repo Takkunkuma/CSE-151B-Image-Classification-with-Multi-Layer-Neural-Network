@@ -161,7 +161,7 @@ def plots(trainEpochLoss, trainEpochAccuracy, valEpochLoss, valEpochAccuracy, ea
     ax1.legend(loc="upper right", fontsize=35.0)
     plt.savefig(constants.saveLocation+"loss.eps")
     plt.show(block=False)
-    fig1.savefig(f'train_valid_loss{experiment}.png')
+    fig1.savefig(constants.saveLocation+f'train_valid_loss{experiment}.png')
 
 
     fig2, ax2 = plt.subplots(figsize=((24, 12)))
@@ -177,7 +177,7 @@ def plots(trainEpochLoss, trainEpochAccuracy, valEpochLoss, valEpochAccuracy, ea
     ax2.legend(loc="lower right", fontsize=35.0)
     plt.savefig(constants.saveLocation+"accuarcy.eps")
     plt.show(block=False)
-    fig2.savefig(f'train_valid_acc{experiment}.png')
+    fig2.savefig(constants.saveLocation+f'train_valid_acc{experiment}.png')
 
     # Saving the losses and accuracies for further offline use
     pd.DataFrame(trainEpochLoss).to_csv(
