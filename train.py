@@ -2,7 +2,6 @@
 import copy
 from neuralnet import *
 
-
 def train(model, x_train, y_train, x_valid, y_valid, config):
     """
     TODO: Train your model here.
@@ -23,12 +22,13 @@ def train(model, x_train, y_train, x_valid, y_valid, config):
     """
 
     # Read in the esssential configs
-
     X_train = util.append_bias(x_train)
-    x_valid = util.append_bias(x_valid)
+    X_valid = util.append_bias(x_valid)
+
 
     M = config['epochs']
     N = config['batch_size']
+    K = config['early_stop_epoch']
 
     # for each epoch
     train_losses = []
@@ -36,18 +36,30 @@ def train(model, x_train, y_train, x_valid, y_valid, config):
     valid_losses = []
     valid_accs = []
 
+    fill_length = len(str(M))
+
     for epoch in range(M):
         # train using minibatches
-        print('#epochhhhhhh', epoch)
-        for train_batch_X, train_batch_y in util.generate_minibatches((X_train, y_train), N):
+        for train_batch_X,train_batch_y in util.generate_minibatches((X_train, y_train), N):
             model.forward(train_batch_X, train_batch_y)
             model.backward(gradReqd=True)
+        
 
         # calculate losses and store them
         curr_train_loss, curr_train_acc = model.forward(X_train, y_train)
-        curr_valid_loss, curr_valid_acc = model.forward(x_valid, y_valid)
-        print('train loss', curr_train_loss, 'acc', curr_train_acc)
-        print('val loss', curr_valid_loss, 'acc', curr_valid_acc)
+        curr_valid_loss, curr_valid_acc = model.forward(X_valid, y_valid)
+
+        # print result
+        debug_msg = (
+            f'epoch {str(epoch+1).zfill(fill_length)}, train loss {curr_train_loss:.6f}, valid loss {curr_valid_loss:.6f}, '
+            f'train acc {curr_train_acc:.3f}, valid acc {curr_valid_acc:.3f}'
+        )
+
+    
+        print(debug_msg)
+
+
+
 
         train_losses.append(curr_train_loss)
         train_accs.append(curr_train_acc)
@@ -56,16 +68,16 @@ def train(model, x_train, y_train, x_valid, y_valid, config):
 
         # save best model?
 
+        # if early stopping
         if config['early_stop']:
-            if len(valid_losses) >= 5 and (np.diff([valid_losses[-5:]]) >= 0).all():
+            if len(valid_losses) >= K and (np.diff([valid_losses[-K:]]) >= 0).all():
                 print('early stopping')
-                break
+                break 
+            
 
     return model, train_losses, train_accs, valid_losses, valid_accs, epoch
 
-# This is the test method
-
-
+#This is the test method
 def modelTest(model, X_test, y_test):
     """
     TODO
@@ -80,5 +92,7 @@ def modelTest(model, X_test, y_test):
         test accuracy
         test loss
     """
-
+    
     return model.forward(util.append_bias(X_test), y_test)
+
+

@@ -29,7 +29,7 @@ def main(args):
     elif (args.experiment == 'test_momentum'):  # 2c
         configFile = "config_2c.yaml"
     elif (args.experiment == 'test_regularization'):  # 2d
-        configFile = None  # Create a config file for 2d and change None to the config file name
+        configFile = "config_2d_l2.yaml"  # Create a config file for 2d and change None to the config file name
     elif (args.experiment == 'test_activation'):  # 2e
         configFile = None  # Create a config file for 2e and change None to the config file name
     elif (args.experiment == 'test_hidden_units'):  # 2f-i
@@ -52,8 +52,17 @@ def main(args):
     # Create a Neural Network object which will be our model
     model = Neuralnetwork(config)
 
+    model_params = (
+        f'learning rate: {model.learning_rate}'
+        f'\nl2: {model.l2}'
+        f'\nregularization constant: {model.regularization}'
+        f'\nmomentum: {model.momentum}'
+        f'\nmomentum gamma: {model.momentum_gamma}'
+    )
+    print(model_params)
+
     # train the model. Use train.py's train method for this
-    bestModel, train_losses, train_accs, valid_losses, valid_accs, epoch = train(
+    bestModel, train_losses, train_accs, valid_losses, valid_accs, epochs = train(
         model, x_train, y_train, x_valid, y_valid, config)
 
     # test the model. Use train.py's modelTest method for this
@@ -62,6 +71,11 @@ def main(args):
 
     # Print test accuracy and test loss
     print('Test Accuracy:', test_acc, ' Test Loss:', test_loss)
+
+
+
+    # generate plots
+    util.plots(train_losses, train_accs, valid_losses, valid_accs, epochs, args.experiment)
 
 
 if __name__ == "__main__":

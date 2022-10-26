@@ -119,7 +119,11 @@ def calculateCorrect(y, t):
     pred = np.argmax(y, axis=1)
     target = np.argmax(t, axis=1)
 
-    return np.sum(pred == target)
+    # # return number of correct predictions
+    # return np.sum(pred == target)
+    
+    # return accuracy
+    return np.mean(pred == target)
 
 
 def append_bias(X):
@@ -137,7 +141,7 @@ def append_bias(X):
     return np.column_stack((bias, X))
 
 
-def plots(trainEpochLoss, trainEpochAccuracy, valEpochLoss, valEpochAccuracy, earlyStop):
+def plots(trainEpochLoss, trainEpochAccuracy, valEpochLoss, valEpochAccuracy, earlyStop, experiment):
     """
     Helper function for creating the plots
     earlyStop is the epoch at which early stop occurred and will correspond to the best model. e.g. epoch=-1 means the last epoch was the best one
@@ -156,7 +160,9 @@ def plots(trainEpochLoss, trainEpochAccuracy, valEpochLoss, valEpochAccuracy, ea
     ax1.set_ylabel('Cross Entropy Loss', fontsize=35.0)
     ax1.legend(loc="upper right", fontsize=35.0)
     plt.savefig(constants.saveLocation+"loss.eps")
-    plt.show()
+    plt.show(block=False)
+    fig1.savefig(f'train_valid_loss{experiment}.png')
+
 
     fig2, ax2 = plt.subplots(figsize=((24, 12)))
     ax2.plot(epochs, trainEpochAccuracy, 'r', label="Training Accuracy")
@@ -170,7 +176,8 @@ def plots(trainEpochLoss, trainEpochAccuracy, valEpochLoss, valEpochAccuracy, ea
     ax2.set_ylabel('Accuracy', fontsize=35.0)
     ax2.legend(loc="lower right", fontsize=35.0)
     plt.savefig(constants.saveLocation+"accuarcy.eps")
-    plt.show()
+    plt.show(block=False)
+    fig2.savefig(f'train_valid_acc{experiment}.png')
 
     # Saving the losses and accuracies for further offline use
     pd.DataFrame(trainEpochLoss).to_csv(

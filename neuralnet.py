@@ -1,3 +1,5 @@
+from math import gamma
+from matplotlib.collections import RegularPolyCollection
 import numpy as np
 import util
 
@@ -141,6 +143,9 @@ class Layer():
         self.dw = 0  # Save the gradient w.r.t w in this. You can have bias in w itself or uncomment the next line and handle it separately
         # self.d_b = None  # Save the gradient w.r.t b in this
 
+        self.v = np.zeros((in_units+1) * out_units).reshape((in_units + 1, out_units))
+        
+
     def __call__(self, x):
         """
         Make layer callable.
@@ -162,7 +167,7 @@ class Layer():
 
         return self.z
 
-    def backward(self, deltaCur=None, learning_rate=0.001, momentum_gamma=None, regularization=None, gradReqd=True):
+    def backward(self, deltaCur=None, learning_rate=0.001, momentum_gamma=None, regularization=0, gradReqd=True, l2=False, momentum=False):
         """
         TODO: Write the code for backward pass. This takes in gradient from its next layer as input and
         computes gradient for its weights and the delta to pass to its previous layers. gradReqd is used to specify whether to update the weights i.e. whether self.w should
@@ -176,7 +181,7 @@ class Layer():
         # delta_j
         delta_j = deltaCur * self.activation.backward(self.a)
         # calculate delta_j & w_ij for all j
-        # print('bp', delta_j.shape, self.w.T.shape)
+
         if (self.isOutput):
             to_return = delta_j @ self.w.T
         else:
@@ -187,8 +192,14 @@ class Layer():
 
         # update weights
         if gradReqd:
-            # print(self.w.shape, self.dw.shape)
-            self.w = self.w + learning_rate * self.dw
+            C = 2 * self.w if l2 else 1
+            if momentum:
+                self.v = momentum_gamma * self.v + learning_rate * (self.dw - regularization * C)
+                self.w = self.w + self.v
+            else:
+                self.w = self.w + learning_rate * (self.dw - regularization * C)
+
+        
 
         return to_return
 
@@ -220,6 +231,10 @@ class Neuralnetwork():
                                          config["weight_type"], isOutput=True))
 
         self.learning_rate = config['learning_rate']
+        self.l2 = config.get('l2', True)
+        self.regularization = config['regularization_penalty']
+        self.momentum_gamma = config['momentum_gamma']
+        self.momentum = config['momentum']
 
     def __call__(self, x, targets=None):
         """
@@ -236,9 +251,6 @@ class Neuralnetwork():
         output = x
         # Compute forward pass through all the layers
         for i in range(self.num_layers):
-            # print('in layer ', i)
-            # print(self.layers[i].w.shape)
-            # print(output.shape)
             output = self.layers[i].forward(output)
 
         # output is now N X 10
@@ -257,7 +269,7 @@ class Neuralnetwork():
         '''
 
         loss = - (targets * np.log(logits)).sum()
-        return loss
+        return 1 / targets.size * loss
 
     def backward(self, gradReqd=True):
         '''
@@ -270,4 +282,11 @@ class Neuralnetwork():
         # backprop through all layers
         for i in range(self.num_layers - 1, -1, -1):
             delta_prev = self.layers[i].backward(
-                deltaCur=delta_prev, learning_rate=self.learning_rate, gradReqd=gradReqd)
+                deltaCur=delta_prev,
+                learning_rate=self.learning_rate,
+                momentum_gamma=self.momentum_gamma,
+                regularization=self.regularization,
+                gradReqd=gradReqd,
+                l2=self.l2,
+                momentum=self.momentum
+            )
