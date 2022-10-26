@@ -38,6 +38,9 @@ def train(model, x_train, y_train, x_valid, y_valid, config):
 
     fill_length = len(str(M))
 
+
+    early_stop_epoch = 0
+
     for epoch in range(M):
         # train using minibatches
         for train_batch_X,train_batch_y in util.generate_minibatches((X_train, y_train), N):
@@ -72,10 +75,11 @@ def train(model, x_train, y_train, x_valid, y_valid, config):
         if config['early_stop']:
             if len(valid_losses) >= K and (np.diff([valid_losses[-K:]]) >= 0).all():
                 print('early stopping')
+                early_stop_epoch = epoch - K
                 break 
             
 
-    return model, train_losses, train_accs, valid_losses, valid_accs, epoch
+    return model, train_losses, train_accs, valid_losses, valid_accs, early_stop_epoch
 
 #This is the test method
 def modelTest(model, X_test, y_test):

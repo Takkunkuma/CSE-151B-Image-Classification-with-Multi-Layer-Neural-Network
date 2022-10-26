@@ -13,7 +13,7 @@ learning_rate: 0.00001
 batch_size: 64
 
 # Number of epochs to train the model
-epochs: 100
+epochs: 110
 
 # Flag to enable early stopping
 early_stop: True
@@ -22,7 +22,7 @@ early_stop: True
 early_stop_epoch: 5
 
 # Regularization constant
-regularization_penalty: 0
+regularization_penalty: 0.01
 
 # Use momentum for training
 momentum: True
@@ -34,4 +34,4 @@ momentum_gamma: 0.7
 weight_type: "random"
 
 # Use L2 or L1 regularization
-l2: False
+l2: True

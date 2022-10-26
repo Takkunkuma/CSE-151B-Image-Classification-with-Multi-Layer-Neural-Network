@@ -68,7 +68,7 @@ class Activation():
         TODO: Implement the sigmoid activation here.
         """
 
-        return 1 / (1 + np.exp(a))
+        return 1 / (1 + np.exp(-a))
 
     def tanh(self, a):
         """
@@ -81,7 +81,7 @@ class Activation():
         """
         TODO: Implement ReLU here.
         """
-        return np.max(0, a)
+        return np.maximum(0, a)
 
     def output(self, a):
         """
