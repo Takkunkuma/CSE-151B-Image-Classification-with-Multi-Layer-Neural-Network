@@ -1,6 +1,7 @@
 import numpy as np
 import util
 
+
 class Activation():
     """
     The class implements different types of activation functions for
@@ -8,11 +9,11 @@ class Activation():
 
     """
 
-    def __init__(self, activation_type = "sigmoid"):
+    def __init__(self, activation_type="sigmoid"):
         """
         TODO: Initialize activation type and placeholders here.
         """
-        if activation_type not in ["sigmoid", "tanh", "ReLU","output"]:   #output can be used for the final layer. Feel free to use/remove it
+        if activation_type not in ["sigmoid", "tanh", "ReLU", "output"]:  # output can be used for the final layer. Feel free to use/remove it
             raise NotImplementedError(f"{activation_type} is not implemented.")
 
         # Type of non-linear activation.
@@ -60,7 +61,6 @@ class Activation():
         elif self.activation_type == "output":
             return self.grad_output(z)
 
-
     def sigmoid(self, a):
         """
         TODO: Implement the sigmoid activation here.
@@ -89,9 +89,7 @@ class Activation():
         exp = np.exp(a)
         row_sum = exp.sum(axis=1)
 
-
         return (exp.T / row_sum).T
-       
 
     def grad_sigmoid(self, x):
         """
@@ -124,7 +122,7 @@ class Layer():
     This class implements Fully Connected layers for your neural network.
     """
 
-    def __init__(self, in_units, out_units, activation, weightType):
+    def __init__(self, in_units, out_units, activation, weightType, isOutput):
         """
         Define the architecture and create placeholders.
         """
@@ -135,10 +133,10 @@ class Layer():
             self.w = 0.01 * np.random.random((in_units + 1, out_units))
 
         self.x = None    # Save the input to forward in this
-        self.a = None    #output without activation
+        self.a = None  # output without activation
         self.z = None    # Output After Activation
-        self.activation = activation   #Activation function
-
+        self.activation = activation  # Activation function
+        self.isOutput = isOutput
 
         self.dw = 0  # Save the gradient w.r.t w in this. You can have bias in w itself or uncomment the next line and handle it separately
         # self.d_b = None  # Save the gradient w.r.t b in this
@@ -155,7 +153,11 @@ class Layer():
         """
 
         self.x = x
-        self.a = util.append_bias(self.x @ self.w)
+        self.a = self.x @ self.w
+        if (self.isOutput):
+            self.a = self.x @ self.w
+        else:
+            self.a = util.append_bias(self.x @ self.w)
         self.z = self.activation(self.a)
 
         return self.z
@@ -173,19 +175,22 @@ class Layer():
 
         # delta_j
         delta_j = deltaCur * self.activation.backward(self.a)
-
         # calculate delta_j & w_ij for all j
-        to_return = delta_j @ self.w.T
-
+        # print('bp', delta_j.shape, self.w.T.shape)
+        if (self.isOutput):
+            to_return = delta_j @ self.w.T
+        else:
+            delta_j = np.delete(delta_j, 0, 1)
+            to_return = delta_j @ self.w.T
         # grad w
-        self.dw = self.x.T @ delta_j 
+        self.dw = self.x.T @ delta_j
 
         # update weights
         if gradReqd:
+            # print(self.w.shape, self.dw.shape)
             self.w = self.w + learning_rate * self.dw
 
         return to_return
-        
 
 
 class Neuralnetwork():
@@ -209,10 +214,10 @@ class Neuralnetwork():
             if i < self.num_layers - 1:
                 self.layers.append(
                     Layer(config['layer_specs'][i], config['layer_specs'][i + 1], Activation(config['activation']),
-                          config["weight_type"]))
+                          config["weight_type"], isOutput=False))
             elif i == self.num_layers - 1:
                 self.layers.append(Layer(config['layer_specs'][i], config['layer_specs'][i + 1], Activation("output"),
-                                         config["weight_type"]))
+                                         config["weight_type"], isOutput=True))
 
         self.learning_rate = config['learning_rate']
 
@@ -221,7 +226,6 @@ class Neuralnetwork():
         Make NeuralNetwork callable.
         """
         return self.forward(x, targets)
-
 
     def forward(self, x, targets=None):
         """
@@ -232,24 +236,20 @@ class Neuralnetwork():
         output = x
         # Compute forward pass through all the layers
         for i in range(self.num_layers):
-            print('in layer ', i)
-            print(self.layers[i].w.shape)
+            # print('in layer ', i)
+            # print(self.layers[i].w.shape)
+            # print(output.shape)
             output = self.layers[i].forward(output)
-            
 
         # output is now N X 10
         self.y = output
         self.targets = targets
 
-        
-        
         # if targets is given return loss and accuracy
         if targets is not None:
             return self.loss(output, targets), util.calculateCorrect(output, targets)
 
         return
-
-
 
     def loss(self, logits, targets):
         '''
@@ -264,15 +264,10 @@ class Neuralnetwork():
         TODO: Implement backpropagation here by calling backward method of Layers class.
         Call backward methods of individual layers.
         '''
-        
 
         delta_prev = self.targets - self.y
 
         # backprop through all layers
         for i in range(self.num_layers - 1, -1, -1):
-            delta_prev = self.layers[i].backward(deltaCur=delta_prev, learning_rate=self.learning_rate, gradReqd=gradReqd)
-            
-
-
-
-
+            delta_prev = self.layers[i].backward(
+                deltaCur=delta_prev, learning_rate=self.learning_rate, gradReqd=gradReqd)

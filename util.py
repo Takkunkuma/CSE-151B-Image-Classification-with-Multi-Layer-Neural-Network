@@ -1,11 +1,13 @@
 import copy
-import os, gzip
+import os
+import gzip
 import yaml
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import pandas as pd
 import constants
+import sys
 
 
 def load_config(path):
@@ -18,7 +20,6 @@ def load_config(path):
         yaml - yaml object containing the config file
     """
     return yaml.load(open(path, 'r'), Loader=yaml.SafeLoader)
-
 
 
 def normalize_data(inp):
@@ -35,29 +36,24 @@ def normalize_data(inp):
 
     """
 
-
     # N X (32 * 32 * 3) to N X 32 * 32 X 3
-    d = int(inp.shape[1] / 3) # only works for square images
+    d = int(inp.shape[1] / 3)  # only works for square images
     N = inp.shape[0]
 
     per_channel = inp.reshape((N, d, 3))
-    
 
     # normalize per channel per image
     mu_per_channel_per_image = np.mean(per_channel, axis=1)
     std_per_channel_per_image = np.std(per_channel, axis=1)
-    
-  
-    mu_2d = np.column_stack([np.tile(mu_per_channel_per_image[:, i].reshape((N, 1)), d) for i in range(3)])
-    std_2d = np.column_stack([np.tile(std_per_channel_per_image[:, i].reshape((N, 1)), d) for i in range(3)])
 
+    mu_2d = np.column_stack(
+        [np.tile(mu_per_channel_per_image[:, i].reshape((N, 1)), d) for i in range(3)])
+    std_2d = np.column_stack(
+        [np.tile(std_per_channel_per_image[:, i].reshape((N, 1)), d) for i in range(3)])
 
     normalized = (inp - mu_2d) / std_2d
-    
 
     return normalized
-
-
 
 
 def one_hot_encoding(labels, num_classes=10):
@@ -73,18 +69,15 @@ def one_hot_encoding(labels, num_classes=10):
         oneHot : N X num_classes 2D array
 
     """
-    
+
     n = labels.size
     k = num_classes
-
     matrix = np.zeros((n, k))
-    
+
     # for each row, change the value specified at index y to 1
     matrix[np.arange(n), labels] = 1
 
     return matrix
-
-
 
 
 def generate_minibatches(dataset, batch_size=64):
@@ -109,7 +102,8 @@ def generate_minibatches(dataset, batch_size=64):
     yield X[l_idx:], y[l_idx:]
 
 
-def calculateCorrect(y,t):  #Feel free to use this function to return accuracy instead of number of correct predictions
+# Feel free to use this function to return accuracy instead of number of correct predictions
+def calculateCorrect(y, t):
     """
     TODO
     Calculates the number of correct predictions
@@ -122,12 +116,10 @@ def calculateCorrect(y,t):  #Feel free to use this function to return accuracy i
         the number of correct predictions
     """
 
-
     pred = np.argmax(y, axis=1)
     target = np.argmax(t, axis=1)
 
     return np.sum(pred == target)
-
 
 
 def append_bias(X):
@@ -139,28 +131,25 @@ def append_bias(X):
     returns:
         X_bias (N X (d+1)) 2D Array
     """
-    
-    
+
     N = X.shape[0]
     bias = np.ones((N, 1))
     return np.column_stack((bias, X))
 
 
-
-
 def plots(trainEpochLoss, trainEpochAccuracy, valEpochLoss, valEpochAccuracy, earlyStop):
-
     """
     Helper function for creating the plots
     earlyStop is the epoch at which early stop occurred and will correspond to the best model. e.g. epoch=-1 means the last epoch was the best one
     """
 
     fig1, ax1 = plt.subplots(figsize=((24, 12)))
-    epochs = np.arange(1,len(trainEpochLoss)+1,1)
+    epochs = np.arange(1, len(trainEpochLoss)+1, 1)
     ax1.plot(epochs, trainEpochLoss, 'r', label="Training Loss")
     ax1.plot(epochs, valEpochLoss, 'g', label="Validation Loss")
-    plt.scatter(epochs[earlyStop],valEpochLoss[earlyStop],marker='x', c='g',s=400,label='Early Stop Epoch')
-    plt.xticks(ticks=np.arange(min(epochs),max(epochs)+1,10), fontsize=35 )
+    plt.scatter(epochs[earlyStop], valEpochLoss[earlyStop],
+                marker='x', c='g', s=400, label='Early Stop Epoch')
+    plt.xticks(ticks=np.arange(min(epochs), max(epochs)+1, 10), fontsize=35)
     plt.yticks(fontsize=35)
     ax1.set_title('Loss Plots', fontsize=35.0)
     ax1.set_xlabel('Epochs', fontsize=35.0)
@@ -172,8 +161,9 @@ def plots(trainEpochLoss, trainEpochAccuracy, valEpochLoss, valEpochAccuracy, ea
     fig2, ax2 = plt.subplots(figsize=((24, 12)))
     ax2.plot(epochs, trainEpochAccuracy, 'r', label="Training Accuracy")
     ax2.plot(epochs, valEpochAccuracy, 'g', label="Validation Accuracy")
-    plt.scatter(epochs[earlyStop], valEpochAccuracy[earlyStop], marker='x', c='g', s=400, label='Early Stop Epoch')
-    plt.xticks(ticks=np.arange(min(epochs),max(epochs)+1,10), fontsize=35)
+    plt.scatter(epochs[earlyStop], valEpochAccuracy[earlyStop],
+                marker='x', c='g', s=400, label='Early Stop Epoch')
+    plt.xticks(ticks=np.arange(min(epochs), max(epochs)+1, 10), fontsize=35)
     plt.yticks(fontsize=35)
     ax2.set_title('Accuracy Plots', fontsize=35.0)
     ax2.set_xlabel('Epochs', fontsize=35.0)
@@ -182,16 +172,18 @@ def plots(trainEpochLoss, trainEpochAccuracy, valEpochLoss, valEpochAccuracy, ea
     plt.savefig(constants.saveLocation+"accuarcy.eps")
     plt.show()
 
-    #Saving the losses and accuracies for further offline use
-    pd.DataFrame(trainEpochLoss).to_csv(constants.saveLocation+"trainEpochLoss.csv")
-    pd.DataFrame(valEpochLoss).to_csv(constants.saveLocation+"valEpochLoss.csv")
-    pd.DataFrame(trainEpochAccuracy).to_csv(constants.saveLocation+"trainEpochAccuracy.csv")
-    pd.DataFrame(valEpochAccuracy).to_csv(constants.saveLocation+"valEpochAccuracy.csv")
-
+    # Saving the losses and accuracies for further offline use
+    pd.DataFrame(trainEpochLoss).to_csv(
+        constants.saveLocation+"trainEpochLoss.csv")
+    pd.DataFrame(valEpochLoss).to_csv(
+        constants.saveLocation+"valEpochLoss.csv")
+    pd.DataFrame(trainEpochAccuracy).to_csv(
+        constants.saveLocation+"trainEpochAccuracy.csv")
+    pd.DataFrame(valEpochAccuracy).to_csv(
+        constants.saveLocation+"valEpochAccuracy.csv")
 
 
 def createTrainValSplit(x_train, y_train):
-
     """
     TODO
     Creates the train-validation split (80-20 split for train-val). Please shuffle the data before creating the train-val split.
@@ -201,12 +193,11 @@ def createTrainValSplit(x_train, y_train):
     # y_train is N X 1
 
     N = x_train.shape[0]
-    
+
     # combine then shuffle
     combined = np.column_stack((x_train, y_train))
-    np.random.shuffle(combined) # shuffles in place
+    np.random.shuffle(combined)  # shuffles in place
 
-    
     train_prop = np.floor(N*0.8).astype(int)
 
     x_train_sh = combined[:train_prop, :-1]
@@ -216,10 +207,6 @@ def createTrainValSplit(x_train, y_train):
     y_valid_sh = combined[train_prop:, -1]
 
     return x_train_sh, y_train_sh, x_valid_sh, y_valid_sh
-    
-
-
-
 
 
 def load_data(path):
@@ -243,16 +230,16 @@ def load_data(path):
     train_labels = []
     val_images = []
     val_labels = []
-    for i in range(1,constants.cifar10_trainBatchFiles+1):
+    for i in range(1, constants.cifar10_trainBatchFiles+1):
         images_dict = unpickle(os.path.join(cifar_path, f"data_batch_{i}"))
         data = images_dict[b'data']
         label = images_dict[b'labels']
         train_labels.extend(label)
         train_images.extend(data)
     train_images = np.array(train_images)
-    train_labels = np.array(train_labels).reshape((len(train_labels),-1))
-    train_images, train_labels, val_images, val_labels = createTrainValSplit(train_images,train_labels)
-    
+    train_labels = np.array(train_labels).reshape((len(train_labels), -1))
+    train_images, train_labels, val_images, val_labels = createTrainValSplit(
+        train_images, train_labels)
 
     train_normalized_images = normalize_data(train_images)
     train_one_hot_labels = one_hot_encoding(train_labels)
@@ -264,8 +251,7 @@ def load_data(path):
     test_data = test_images_dict[b'data']
     test_labels = test_images_dict[b'labels']
     test_images = np.array(test_data)
-    test_labels = np.array(test_labels).reshape((len(test_labels),-1))
+    test_labels = np.array(test_labels).reshape((len(test_labels), -1))
     test_normalized_images = normalize_data(test_images)
-    test_one_hot_labels = one_hot_encoding(test_labels)
-    
+    test_one_hot_labels = one_hot_encoding(test_labels.flatten())
     return train_normalized_images, train_one_hot_labels, val_normalized_images, val_one_hot_labels,  test_normalized_images, test_one_hot_labels
