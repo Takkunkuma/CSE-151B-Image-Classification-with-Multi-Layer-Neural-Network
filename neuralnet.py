@@ -124,7 +124,7 @@ class Layer():
     This class implements Fully Connected layers for your neural network.
     """
 
-    def __init__(self, in_units, out_units, activation, weightType, isOutput):
+    def __init__(self, in_units, out_units, activation, weightType, isOutput, batch_size):
         """
         Define the architecture and create placeholders.
         """
@@ -144,6 +144,7 @@ class Layer():
         # self.d_b = None  # Save the gradient w.r.t b in this
 
         self.v = np.zeros((in_units+1) * out_units).reshape((in_units + 1, out_units))
+        self.batch_size = batch_size
         
 
     def __call__(self, x):
@@ -188,13 +189,14 @@ class Layer():
             delta_j = np.delete(delta_j, 0, 1)
             to_return = delta_j @ self.w.T
         # grad w
-        self.dw = self.x.T @ delta_j
+        self.dw = self.x.T @ delta_j / self.batch_size # divide gradient by batch size to average it
 
         # update weights
         if gradReqd:
             C = 2 * self.w if l2 else 1
             if momentum:
                 self.v = momentum_gamma * self.v + learning_rate * (self.dw - regularization * C)
+                #self.v = momentum_gamma * self.v + (1 - momentum_gamma) * learning_rate * (self.dw - regularization * C)
                 self.w = self.w + self.v
             else:
                 self.w = self.w + learning_rate * (self.dw - regularization * C)
@@ -225,16 +227,17 @@ class Neuralnetwork():
             if i < self.num_layers - 1:
                 self.layers.append(
                     Layer(config['layer_specs'][i], config['layer_specs'][i + 1], Activation(config['activation']),
-                          config["weight_type"], isOutput=False))
+                          config["weight_type"], isOutput=False, batch_size=config['batch_size']))
             elif i == self.num_layers - 1:
                 self.layers.append(Layer(config['layer_specs'][i], config['layer_specs'][i + 1], Activation("output"),
-                                         config["weight_type"], isOutput=True))
+                                         config["weight_type"], isOutput=True, batch_size=config['batch_size']))
 
         self.learning_rate = config['learning_rate']
         self.l2 = config.get('l2', True)
         self.regularization = config['regularization_penalty']
         self.momentum_gamma = config['momentum_gamma']
         self.momentum = config['momentum']
+        self.batch_size = config['batch_size']
 
     def __call__(self, x, targets=None):
         """

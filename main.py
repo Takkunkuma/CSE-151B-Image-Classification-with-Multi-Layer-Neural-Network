@@ -27,13 +27,13 @@ def main(args):
     if (args.experiment == 'test_gradients'):  # 2b
         configFile = 'config_test.yaml'  # Create a config file for 2b and change None to the config file name
     elif (args.experiment == 'test_momentum'):  # 2c
-        configFile = "config_2c.yaml"
+        configFile = "config_2c_default.yaml"
     elif (args.experiment == 'test_regularization'):  # 2d
         configFile = "config_2d_l2_001.yaml"  # Create a config file for 2d and change None to the config file name
     elif (args.experiment == 'test_activation'):  # 2e
         configFile = 'config_2e_sigmoid.yaml'  # Create a config file for 2e and change None to the config file name
     elif (args.experiment == 'test_hidden_units'):  # 2f-i
-        configFile = 'config_2f_double_hu.yaml'  # Create a config file for 2f-i and change None to the config file name
+        configFile = 'config_2f_dbl_hu.yaml'  # Create a config file for 2f-i and change None to the config file name
     elif (args.experiment == 'test_hidden_layers'):  # 2f-ii
         configFile = 'config_2f_2_layer.yaml'  # Create a config file for 2b and change None to the config file name
 
