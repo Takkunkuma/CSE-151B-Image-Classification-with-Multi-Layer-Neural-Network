@@ -1,0 +1,12 @@
+#!/bin/sh
+'''exec' "/Users/kumamototatsuo/Desktop/2022 Fall/CSE151b/PA2/cse-151b-pa2-lucas-andy-tatsuo/venv/bin/python3" "$0" "$@"
+' '''
+# -*- coding: utf-8 -*-
+import re
+import sys
+
+from fontTools.__main__ import main
+
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw?|\.exe)?$', '', sys.argv[0])
+    sys.exit(main())

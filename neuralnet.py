@@ -195,13 +195,11 @@ class Layer():
         if gradReqd:
             C = 2 * self.w if l2 else 1
             if momentum:
-                self.v = momentum_gamma * self.v + learning_rate * (self.dw - regularization * C)
-                #self.v = momentum_gamma * self.v + (1 - momentum_gamma) * learning_rate * (self.dw - regularization * C)
+                #self.v = momentum_gamma * self.v + learning_rate * (self.dw - regularization * C)
+                self.v = momentum_gamma * self.v + (1 - momentum_gamma) * learning_rate * (self.dw - regularization * C)
                 self.w = self.w + self.v
             else:
                 self.w = self.w + learning_rate * (self.dw - regularization * C)
-
-        
 
         return to_return
 

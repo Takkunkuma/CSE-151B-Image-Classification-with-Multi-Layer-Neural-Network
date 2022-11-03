@@ -45,6 +45,7 @@ def normalize_data(inp):
     # normalize per channel per image
     mu_per_channel_per_image = np.mean(per_channel, axis=1)
     std_per_channel_per_image = np.std(per_channel, axis=1)
+    #print(mu_per_channel_per_image.shape)
 
     mu_2d = np.column_stack(
         [np.tile(mu_per_channel_per_image[:, i].reshape((N, 1)), d) for i in range(3)])
@@ -249,6 +250,16 @@ def load_data(path):
         train_images, train_labels)
 
     train_normalized_images = normalize_data(train_images)
+    #print(train_normalized_images.shape)
+    rm = np.mean(train_normalized_images[1][:1024])
+    bm = np.mean(train_normalized_images[1][1024:2048])
+    gm = np.mean(train_normalized_images[1][2048:3072])
+
+    rsd = np.std(train_normalized_images[1][:1024])
+    bsd = np.std(train_normalized_images[1][1024:2048])
+    gsd = np.std(train_normalized_images[1][2048:3072])
+
+    print(rm, bm, gm, rsd, bsd, gsd)
     train_one_hot_labels = one_hot_encoding(train_labels)
 
     val_normalized_images = normalize_data(val_images)
